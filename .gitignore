@@ -1,0 +1,20 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+
+# runtime data (sourcing logs, uploads) — persisted at runtime, never committed
+data/*
+!data/.gitkeep
+
+# secrets — NEVER commit keys
+.env
+.env.local
+.env.*.local
+
+# logs / os
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
