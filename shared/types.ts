@@ -118,3 +118,106 @@ export type SolverSettings = {
   secondhandOk: boolean;
   excludeRetailers: string[];
   pinnedKeep: string[];        // product ids locked into the cart
+  avoidMaterials: string[];
+};
+
+export const DEFAULT_SETTINGS: SolverSettings = {
+  capMode: 'hard',
+  softPct: 0.05,
+  leaveHeadroomPct: 0.02,
+  includeTaxShipping: true,
+  taxRate: 0,
+  clearanceMarginCm: 60,
+  mustFitDoorway: true,
+  assembledCheck: true,
+  matchStrictness: 0.72,
+  reSourceAttempts: 2,
+  conceptCriticThreshold: 0.65,
+  region: 'US',
+  currency: 'USD',
+  units: 'cm',
+  catalogOnly: false,
+  secondhandOk: false,
+  excludeRetailers: [],
+  pinnedKeep: [],
+  avoidMaterials: [],
+};
+
+export type FitResult = {
+  ok: boolean;
+  footprintFits: boolean;
+  doorwayFits: boolean;
+  clearanceOk: boolean;
+  reasons: string[];       // human-readable ("fits the 1.1 m gap", "0.82 m < 0.9 m door")
+};
+
+export type ItemState = 'kept' | 'swapped' | 'dropped' | 'added';
+
+export type CartItem = {
+  product: Product;
+  slot: Slot;
+  state: ItemState;
+  prevProductId?: string;
+  prevPrice?: number;
+  reason?: string;
+  fit: FitResult;
+};
+
+export type SolveResult = {
+  items: CartItem[];       // the buyable cart (kept/swapped/added), one per filled slot
+  dropped: CartItem[];     // slots present in the prior cart but not affordable now
+  total: number;
+  budget: number;
+  spare: number;           // budget - total (can be negative if infeasible)
+  feasible: boolean;       // could we fill the core slots within the cap?
+  underBudget: boolean;
+  fits: boolean;           // every piece fits + collective packing ok
+  budgetFitError: number;  // |budget - total|
+  searched: number;        // candidates considered
+  reSolveMs: number;       // measured wall-clock of THIS solve
+  clearanceMinM: number;   // smallest clearance achieved (for the spec)
+  notes: string[];
+};
+
+/** A fully-computed design: the room + brief + settings + the current cart. */
+export type Design = {
+  id: string;
+  createdAt: string;
+  room: RoomModel;
+  brief: Brief;
+  settings: SolverSettings;
+  candidates: Candidate[];
+  result: SolveResult;
+  concept?: { title: string; rationale: string; palette: string[] };
+  criticScore?: number;
+  criticNote?: string;
+  engine: EngineInfo;
+  seeded?: boolean;
+  narration?: string;
+  log?: LogEvent[];
+  share?: string;
+};
+
+export type Candidate = Product & { styleScore: number; slot: Slot; fit: FitResult };
+
+/** Which engine actually ran (shown honestly in the UI). */
+export type EngineInfo = {
+  provider: 'qwen' | 'anthropic' | 'heuristic';
+  grounding: string;       // model id or 'manual'
+  styleSearch: string;     // 'text-embedding-v4 + qwen3-rerank' | 'lexical'
+  agentLoop: string;       // model id or 'deterministic'
+  critic: string;
+  toolCalls: number;
+  catalogSize: number;
+  webSearch: boolean;
+  sourcedMs: number;       // wall-clock of the full sourcing run
+  logHash?: string;
+};
+
+/** One line of the auditable NDJSON sourcing log. */
+export type LogEvent = {
+  t: string;               // clock label mm:ss
+  step: string;            // e.g. 'vl.ground', 'web_search'
+  detail: string;
+  ts: number;              // epoch ms
+};
