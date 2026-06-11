@@ -148,3 +148,124 @@ export function solve(candidates: Candidate[], opts: SolveOptions): SolveResult 
       const cur = new Float64Array(capR + 1);
       const ch = new Int16Array(capR + 1).fill(-1);
       for (let b = 0; b <= capR; b++) {
+        let best = dp[b];      // skip this slot
+        let bi = -1;
+        for (let i = 0; i < items.length; i++) {
+          const c = items[i].cost;
+          if (c <= b) {
+            const v = dp[b - c] + items[i].val;
+            if (v > best) { best = v; bi = i; }
+          }
+        }
+        cur[b] = best;
+        ch[b] = bi;
+      }
+      dp = cur;
+      choice.push(ch);
+    }
+    // reconstruct
+    let rem = capR;
+    for (let k = dpSlots.length - 1; k >= 0; k--) {
+      const bi = choice[k][rem];
+      if (bi >= 0) {
+        const line = grouped.get(dpSlots[k])![bi];
+        chosen.push({ product: line.ref, slot: dpSlots[k], state: 'added', fit: line.ref.fit });
+        rem -= line.cost;
+      }
+    }
+  }
+
+  // current cart = locks + chosen
+  let cart: CartItem[] = [...lockedItems, ...chosen];
+
+  // ---- collective packing check + repair ------------------------------------
+  let pack = packCheck(cart.map((i) => i.product), opts.room, s);
+  const repairedDrops: CartItem[] = [];
+  while (!pack.ok) {
+    // drop the least-important non-locked floor piece
+    const candidatesToDrop = cart
+      .filter((i) => !lockedSlots.has(i.slot) && !i.product.wallMount && i.product.category !== 'rug')
+      .sort((a, b) => SLOT_WEIGHT[a.slot] - SLOT_WEIGHT[b.slot]);
+    const drop = candidatesToDrop[0];
+    if (!drop) break;
+    cart = cart.filter((i) => i !== drop);
+    repairedDrops.push({ ...drop, state: 'dropped', reason: 'removed so the room still breathes (walkway)' });
+    pack = packCheck(cart.map((i) => i.product), opts.room, s);
+  }
+
+  // ---- diff against the prior cart → kept / swapped / dropped ---------------
+  const priorMap = new Map<Slot, Product>();
+  if (opts.prior) for (const it of opts.prior.items) priorMap.set(it.slot, it.product);
+
+  const dropped: CartItem[] = [...repairedDrops];
+  for (const it of cart) {
+    if (lockedSlots.has(it.slot)) { it.state = 'kept'; continue; }
+    const prev = priorMap.get(it.slot);
+    if (!opts.prior) { it.state = 'added'; continue; }
+    if (!prev) { it.state = 'added'; it.reason = `added — ${it.product.title.toLowerCase()}`; continue; }
+    if (prev.id === it.product.id) {
+      it.state = 'kept';
+      it.reason = it.reason || `the ${SLOT_WORD[it.slot]} you loved — still in budget`;
+    } else {
+      it.state = 'swapped';
+      it.prevProductId = prev.id;
+      it.prevPrice = prev.price;
+      const cheaper = it.product.price < prev.price;
+      it.reason = cheaper
+        ? `same ${SLOT_WORD[it.slot]} look, ${prev.price - it.product.price} less — in stock, still fits`
+        : `a closer match to the look — in stock, still fits`;
+    }
+  }
+  // slots present before but gone now = dropped
+  if (opts.prior) {
+    const curSlots = new Set(cart.map((i) => i.slot));
+    for (const it of opts.prior.items) {
+      if (!curSlots.has(it.slot)) {
+        dropped.push({ product: it.product, slot: it.slot, state: 'dropped', prevPrice: it.product.price, fit: it.fit });
+      }
+    }
+  }
+  // give dropped items a reason (what their money freed up)
+  for (const d of dropped) {
+    if (!d.reason) d.reason = `freed $${d.prevPrice ?? d.product.price} for the pieces you kept`;
+  }
+
+  const total = cart.reduce((sum, i) => sum + effCost(i.product as Candidate, s), 0);
+  const seatingFilled = !opts.plan.includes('seating_primary') || cart.some((i) => i.slot === 'seating_primary');
+  const feasible = feasibleDP && seatingFilled && lockedCost <= cap;
+  if (!feasible) notes.push('Could not fill the core of the room within the cap.');
+
+  const reSolveMs = now() - t0;
+
+  return {
+    items: cart,
+    dropped,
+    total,
+    budget: opts.budget,
+    spare: opts.budget - total,
+    feasible,
+    underBudget: total <= opts.budget,
+    fits: cart.every((i) => i.fit.ok) && pack.ok,
+    budgetFitError: Math.abs(opts.budget - total),
+    searched: candidates.length,
+    reSolveMs,
+    clearanceMinM: pack.clearanceMinM,
+    notes,
+  };
+}
+
+/** The cheapest set that fills the core — used to suggest a raise on the gentle
+ *  "over budget" state ("raise to $X"). */
+export function minimumViableBudget(candidates: Candidate[], room: RoomModel, settings: SolverSettings, plan: Slot[]): number {
+  const core: Slot[] = ['seating_primary', 'lighting', 'coffee_table'];
+  let sum = 0;
+  for (const slot of core) {
+    if (!plan.includes(slot)) continue;
+    const cheapest = candidates
+      .filter((c) => c.slot === slot && c.fit.ok)
+      .sort((a, b) => a.price - b.price)[0];
+    if (cheapest) sum += cheapest.price;
+  }
+  // undo the headroom so the suggested number actually sources the core
+  return Math.ceil(sum / (1 - settings.leaveHeadroomPct) / 10) * 10;
+}
