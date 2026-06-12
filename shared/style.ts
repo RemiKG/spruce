@@ -58,3 +58,40 @@ function negations(text: string): Set<string> {
     for (const [key, syns] of Object.entries(SYN)) {
       if (match[1] === key || syns.includes(match[1])) { neg.add(key); syns.forEach(s => neg.add(s)); }
     }
+  }
+  return neg;
+}
+
+export function styleScore(brief: Brief, p: Product): number {
+  const seeds = [...brief.styleTags.flatMap(tokenize), ...tokenize(brief.vibeText)];
+  const prof = profile(seeds);
+  const neg = negations(brief.vibeText);
+
+  const bag = [
+    ...p.styleTags.flatMap(tokenize),
+    ...p.materials.flatMap(tokenize),
+    ...p.colors.flatMap(tokenize),
+    ...tokenize(p.title),
+    ...tokenize(p.subtitle || ''),
+  ];
+  const bagSet = new Set(bag);
+
+  // weighted count of brief concepts the product hits, with diminishing returns
+  let matchW = 0;
+  for (const [tok, w] of prof) if (bagSet.has(tok)) matchW += w;
+  const base = 1 - Math.exp(-matchW / 2.6);   // ~0.32 @1 · 0.54 @2 · 0.78 @4 · 0.9 @6
+
+  // material / colour palette alignment (a gentle bonus)
+  const palette = (brief.palette || []).flatMap(tokenize);
+  let paletteBonus = 0;
+  for (const c of palette) if (bagSet.has(c)) paletteBonus += 0.05;
+
+  // negation penalty
+  let penalty = 0;
+  for (const t of bag) if (neg.has(t)) penalty += 0.22;
+  for (const avoid of brief.avoidMaterials.flatMap(tokenize)) if (bagSet.has(avoid)) penalty += 0.4;
+
+  // a warm prior (~0.30 baseline) with strong upside for on-brief pieces
+  const score = 0.30 + 0.6 * base + Math.min(paletteBonus, 0.18) - penalty;
+  return Math.max(0, Math.min(1, score));
+}
