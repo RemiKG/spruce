@@ -68,3 +68,51 @@ app.post('/api/design', async (req) => {
   const b = (req.body || {}) as any;
   const room = b.room as RoomModel;
   if (!room) throw new Error('room required (ground first)');
+  const design = await sourceDesign({
+    room, vibe: String(b.vibe || ''), budget: Number(b.budget) || 800,
+    settings: b.settings as Partial<SolverSettings> | undefined, seeded: !!b.seeded,
+  });
+  return design;
+});
+
+// the seeded demo — same engine, pre-filled inputs
+app.get('/api/demo', async () => {
+  const design = await sourceDesign({ room: demoRoom(), vibe: DEMO_VIBE, budget: DEMO_BUDGET, seeded: true });
+  return { design, currentRoomSpec: demoCurrentRoomSpec(), vibe: DEMO_VIBE, budget: DEMO_BUDGET };
+});
+
+// server-side mirror of the live re-solve (client normally does this locally)
+app.post('/api/resolve', async (req) => {
+  const b = (req.body || {}) as any;
+  const settings: SolverSettings = { ...DEFAULT_SETTINGS, ...(b.settings || {}) };
+  const room = b.room as RoomModel;
+  const candidates = b.candidates as Candidate[];
+  const plan = b.plan || planFor(room, b.brief || ({ vibeText: '', styleTags: [] } as any));
+  return solve(candidates, { budget: Number(b.budget), settings, room, plan, prior: b.prior || null });
+});
+
+// stateless share: decode inputs, recompute the design live
+app.get('/api/share/:token', async (req, reply) => {
+  const payload = decodeShare((req.params as any).token);
+  if (!payload) return reply.code(400).send({ error: 'bad share token' });
+  const design = await sourceDesign({ room: payload.room, vibe: payload.brief.vibeText, budget: payload.budget, seeded: payload.seeded });
+  return { design };
+});
+
+// the raw auditable NDJSON sourcing log
+app.get('/api/log/:id', async (req) => ({ events: readLog((req.params as any).id) }));
+
+// ---- static SPA (prod) + SPA fallback --------------------------------------
+if (existsSync(CLIENT_DIR)) {
+  await app.register(fastifyStatic, { root: CLIENT_DIR, wildcard: false });
+  app.setNotFoundHandler((req, reply) => {
+    if (req.raw.url?.startsWith('/api')) return reply.code(404).send({ error: 'not found' });
+    return reply.sendFile('index.html');
+  });
+  console.log(`[spruce] serving built client from ${CLIENT_DIR}`);
+} else {
+  console.log('[spruce] no dist/client yet — run `npm run dev` (Vite serves the client and proxies /api here)');
+}
+
+await app.listen({ port: ENV.PORT, host: '0.0.0.0' });
+console.log(`[spruce] API on http://localhost:${ENV.PORT}  ·  engine: ${activeProvider()}  ·  catalog: ${catalogSize()} products`);
