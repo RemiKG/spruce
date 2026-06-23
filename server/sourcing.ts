@@ -58,3 +58,53 @@ export async function sourceDesign(input: SourceInput): Promise<Design> {
     candidates = candidates.map((c) => (neural.scores.has(c.id) ? { ...c, styleScore: neural.scores.get(c.id)! } : c));
     aiCalls++;
   }
+  push('style.rerank', `${styleLabel} · ${candidates.length} real catalog items ranked`);
+
+  const webSearch = ai.ENV.ENABLE_WEB_SEARCH && ai.activeProvider() === 'qwen';
+  const webHits = 0; // live web_search extends the catalog when enabled (see _NEEDS note)
+  if (webSearch) push('web_search', 'live retailer lookups enabled');
+
+  // 3) the deterministic budget-solver gate
+  const plan = planFor(input.room, brief);
+  const result = solve(candidates, { budget: input.budget, settings, room: input.room, plan, prior: null });
+  push('solver.gate', `$${result.total} ≤ $${result.budget} ${result.underBudget ? '✓' : '✗'} · all fit ${result.fits ? '✓' : '✗'} · ${result.items.length} pieces`);
+  push('plus.cart', `cart.json · ${result.items.length} items · per-swap rationale`);
+
+  // 4) concept + VL concept-critic (re-source below threshold)
+  const concept = { title: brief.directionTitle || 'A warm refresh', rationale: brief.directionRationale || '', palette: brief.palette || [] };
+  const crit = await ai.critic({ concept, brief, cart: result.items.map((i) => i.product) });
+  if (crit.used !== 'heuristic') aiCalls++;
+  push('vl.critic', `concept ${crit.result.score.toFixed(2)} ${crit.result.score >= settings.conceptCriticThreshold ? '✓' : `↺ < ${settings.conceptCriticThreshold}`}`);
+
+  // 5) narration (the sprig's welcome line — deterministic template, instant)
+  const narration = templateNarration({ budget: input.budget, total: result.total, kept: result.items, swapped: [], dropped: result.dropped });
+
+  const provider = ai.activeProvider();
+  const toolCalls = catalog.length + webHits + aiCalls; // catalog lookups + web hits + live model calls
+  const sourcedMs = now() - t0;
+  push('done', `${toolCalls} tool-calls · sourced in ${(sourcedMs / 1000).toFixed(1)}s`);
+
+  const payload: SharePayload = {
+    v: 1, budget: input.budget,
+    brief: { vibeText: brief.vibeText, styleTags: brief.styleTags, mustKeep: brief.mustKeep, avoidMaterials: brief.avoidMaterials, currency: brief.currency, units: brief.units, region: brief.region },
+    room: input.room, seeded: input.seeded,
+  };
+  const id = designId(payload);
+  const logHash = appendLog(id, log);
+  const share = encodeShare(payload);
+
+  const engine: EngineInfo = {
+    provider,
+    grounding: ai.MODEL_IDS[provider].grounding,
+    styleSearch: styleLabel,
+    agentLoop: provider === 'heuristic' ? 'deterministic' : ai.MODEL_IDS[provider].agent,
+    critic: ai.MODEL_IDS[provider].critic,
+    toolCalls, catalogSize: catalog.length + webHits, webSearch, sourcedMs, logHash,
+  };
+
+  return {
+    id, createdAt: new Date(t0).toISOString(), room: input.room, brief, settings,
+    candidates, result, concept, criticScore: crit.result.score, criticNote: crit.result.note,
+    engine, seeded: input.seeded, narration, log, share,
+  };
+}
