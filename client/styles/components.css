@@ -1,0 +1,58 @@
+/* Spruce — components (wordmark, buttons, chips, cards, price-tags, slider, cutouts) */
+
+/* ---- Wordmark ---- */
+.wm{ display:inline-flex; align-items:baseline; font-family:var(--display); font-weight:800;
+  font-size:var(--wm); line-height:1; letter-spacing:-.015em; }
+.wm-t{ font-weight:800; }
+.wm-u{ display:inline-block; align-self:baseline; margin:0 calc(var(--wm) * -.055); }
+
+/* ---- Buttons ---- */
+.btn{ font-family:var(--ui); font-weight:700; font-size:15px; border:0; cursor:pointer;
+  padding:13px 20px; border-radius:var(--r-pill); display:inline-flex; align-items:center; gap:9px; line-height:1;
+  text-decoration:none; transition:transform .12s ease, box-shadow .12s ease, filter .12s ease; }
+.btn:hover{ transform:translateY(-1px); }
+.btn:active{ transform:translateY(0); }
+.btn:disabled{ opacity:.5; cursor:not-allowed; transform:none; }
+.btn-ink{ background:var(--ink); color:var(--cream-hi); box-shadow:var(--lift-sm); }
+.btn-amber{ background:var(--amber); color:#3A210F; box-shadow:var(--lift-sm); }
+.btn-ghost{ background:transparent; color:var(--ink); box-shadow:inset 0 0 0 1.5px var(--hair-2); }
+.btn-sm{ padding:9px 14px; font-size:13.5px; }
+
+/* ---- Chips / eyebrows / pills ---- */
+.eyebrow{ font-family:var(--mono); font-size:12px; font-weight:600; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--amber-ink); }
+.chip{ display:inline-flex; align-items:center; gap:7px; font-family:var(--ui); font-weight:600; font-size:13px;
+  padding:7px 13px; border-radius:var(--r-pill); background:var(--cream-hi); color:var(--ink-80);
+  box-shadow:inset 0 0 0 1px var(--hair); }
+.chip .k{ font-family:var(--mono); color:var(--ink-60); }
+.chip-sprig{ background:color-mix(in srgb, var(--sprig) 14%, var(--cream-hi)); color:var(--sprig-ink); box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--sprig) 30%, transparent); }
+.chip-amber{ background:color-mix(in srgb, var(--amber) 18%, var(--cream-hi)); color:var(--amber-ink); box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--amber) 34%, transparent); }
+
+/* ---- Cards ---- */
+.card{ background:var(--cream-hi); border-radius:var(--r-lg); box-shadow:var(--lift), inset 0 0 0 1px var(--hair);
+  position:relative; }
+
+/* ---- Paper price-tag (pinned to a cutout) ---- */
+.ptag{ display:inline-flex; align-items:center; gap:6px; position:relative; font-family:var(--mono); font-weight:700;
+  font-size:14px; color:#3A210F; background:var(--amber); padding:6px 11px 6px 16px; border-radius:5px;
+  box-shadow:var(--cut), 0 6px 12px -8px rgba(35,48,40,.5); }
+.ptag::before{ content:""; position:absolute; left:6px; top:50%; width:6px; height:6px; border-radius:50%;
+  background:var(--cream-hi); transform:translateY(-50%); box-shadow:inset 0 0 0 1px rgba(58,33,15,.35); }
+.ptag.kept{ background:color-mix(in srgb,var(--sprig) 22%, var(--cream-hi)); color:var(--sprig-ink); }
+.ptag.kept::before{ box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--sprig) 50%, transparent); }
+
+/* ---- Budget slider (the core control) ---- */
+.slider{ position:relative; height:14px; border-radius:999px; background:var(--cream-lo);
+  box-shadow:inset 0 1px 3px rgba(35,48,40,.14); }
+.slider .fill{ position:absolute; left:0; top:0; bottom:0; border-radius:999px;
+  background:linear-gradient(90deg,var(--amber-soft),var(--amber)); box-shadow:inset 0 0 0 1px rgba(190,112,56,.4); }
+.slider .knob{ position:absolute; top:50%; width:30px; height:30px; border-radius:50%; transform:translate(-50%,-50%);
+  background:var(--cream-hi); box-shadow:0 4px 10px -3px rgba(35,48,40,.55), inset 0 0 0 2px var(--amber); }
+.slider .knob::after{ content:""; position:absolute; inset:9px; border-radius:50%; background:var(--amber); }
+
+/* ---- Cut-paper wrapper: a soft lift + a faint cut edge under an element ---- */
+.cutpaper{ filter:drop-shadow(0 6px 5px rgba(35,48,40,.17)) drop-shadow(0 1.5px 0 rgba(35,48,40,.11)); }
+
+/* ---- Tiny meter ---- */
+.meter{ height:8px; border-radius:999px; background:var(--cream-lo); overflow:hidden; box-shadow:inset 0 0 0 1px var(--hair); }
+.meter > i{ display:block; height:100%; border-radius:999px; background:var(--sprig); }
