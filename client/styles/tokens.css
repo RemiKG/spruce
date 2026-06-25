@@ -1,0 +1,75 @@
+/* Spruce — design tokens (locked). Warm cut-paper diorama · cozy-consumer register. */
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Fraunces:ital,opsz,wght,SOFT@0,9..144,500..900,0..80;1,9..144,500..800,0..80&family=IBM+Plex+Mono:wght@400;500;600;700&family=Figtree:wght@400;500;600;700;800&display=swap');
+
+:root{
+  /* ---- Paper (the cream world) ---- */
+  --cream:      #F5F3EF;   /* base surface */
+  --cream-hi:   #FCFBF7;   /* lifted / lit paper: cards, fields */
+  --cream-lo:   #ECE6DB;   /* recessed paper: floor, wells */
+  --wall:       #EDE7DC;   /* diorama wall card */
+  --wall-2:     #E4DCCE;   /* diorama side wall (shadowed fold) */
+  --floor:      #E7DECF;   /* diorama floor card */
+
+  /* ---- Ink (spruce-forest, the one dark) ---- */
+  --ink:        #233028;   /* text + dark ink */
+  --ink-80:     #38473E;
+  --ink-60:     #5A6961;
+  --ink-40:     #8B968E;
+  --ink-25:     #B6BEB6;
+  --ink-12:     #233028;   /* used at low alpha via color-mix in components */
+  --hair:       rgba(35,48,40,.10);  /* hairline */
+  --hair-2:     rgba(35,48,40,.16);
+
+  /* ---- Terracotta / amber (the one warm accent) ---- */
+  --amber:      #D98E5A;
+  --amber-deep: #BE7038;   /* pressed / cut-edge of amber paper */
+  --amber-soft: #EAC1A0;   /* wash / highlight */
+  --amber-ink:  #8A4F26;   /* amber text on cream (accessible) */
+
+  /* ---- Living spruce-green (sprig + affirmations ONLY, used sparingly) ---- */
+  --sprig:      #3E7A4E;
+  --sprig-deep: #2C5A39;
+  --sprig-lite: #7CB088;
+  --sprig-ink:  #2E5C3B;   /* green text on cream (accessible) */
+
+  /* ---- Paper-craft materials (muted, matte, in-family — the "real product" palette) ---- */
+  --walnut:     #8C5A3B;
+  --walnut-hi:  #A6764F;
+  --oak:        #C7A97B;
+  --oak-hi:     #D8BF97;
+  --linen:      #E8DEC9;
+  --oat:        #DAD0BC;
+  --sage:       #9FAE98;
+  --sage-hi:    #B7C2B0;
+  --clay:       #CE8560;
+  --slate:      #6E7A74;   /* muted blue-green grey (metal/dark upholstery) */
+  --brass:      #C69A5B;
+
+  /* ---- Type ---- */
+  --display: 'Baloo 2', system-ui, sans-serif;   /* wordmark + headings: rounded, chunky, warm */
+  --serif:   'Fraunces', Georgia, serif;          /* editorial pull-quotes only */
+  --mono:    'IBM Plex Mono', ui-monospace, monospace; /* every live number */
+  --ui:      'Figtree', system-ui, sans-serif;    /* body + chrome */
+
+  /* ---- Geometry ---- */
+  --r-lg: 22px; --r-md: 16px; --r-sm: 11px; --r-pill: 999px;
+  --lift: 0 18px 34px -20px rgba(35,48,40,.42);       /* card float */
+  --lift-sm: 0 8px 18px -12px rgba(35,48,40,.40);
+  --cut: 0 2px 0 rgba(35,48,40,.09);                   /* the paper "cut" edge under a piece */
+}
+
+*{ box-sizing:border-box; }
+html,body{ margin:0; }
+body{ font-family:var(--ui); color:var(--ink); background:var(--cream); -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
+
+/* Numerals are ALWAYS mono + tabular — the credibility engine. */
+.num, .mono{ font-family:var(--mono); font-feature-settings:'tnum' 1,'zero' 1; letter-spacing:-.01em; }
+
+/* Warm paper grain overlay — subtle, multiply. Add <div class="grain"></div> inside a positioned surface. */
+.grain{ position:absolute; inset:0; pointer-events:none; opacity:.55; mix-blend-mode:multiply; z-index:0;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 0.55 0 0 0 0 0.52 0 0 0 0 0.47 0 0 0 0.5 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
+.grain.soft{ opacity:.35; }
+.grain.fine{ background-size:120px 120px; }
+
+/* the little living green dot used for "in stock / kept / live" */
+.dot{ width:8px;height:8px;border-radius:50%;background:var(--sprig);display:inline-block; box-shadow:0 0 0 3px color-mix(in srgb, var(--sprig) 22%, transparent); }
