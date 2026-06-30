@@ -88,3 +88,75 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setClarify(d.room.clarify ? d.room.clarify.options[1] : null);
     } catch (e) { setError((e as Error).message); } finally { setBusy(false); }
   }
+
+  async function ground(file?: File | null) {
+    setBusy(true); setError(null); setSeeded(false);
+    try {
+      let imageBase64: string | undefined; let mediaType: string | undefined;
+      if (file) {
+        setPhotoUrl(URL.createObjectURL(file));
+        const r = await fileToBase64(file); imageBase64 = r.base64; mediaType = r.mediaType;
+      } else {
+        setPhotoUrl(null);
+      }
+      const out = await api.ground({ imageBase64, mediaType, vibe, budget, hasReference });
+      setRoom(out.room); setCurrentRoomSpec(out.currentRoomSpec || null);
+      setClarify(out.room.clarify ? out.room.clarify.options[1] : null);
+    } catch (e) { setError((e as Error).message); throw e; } finally { setBusy(false); }
+  }
+
+  async function runDesign() {
+    if (!room) return;
+    setBusy(true); setError(null);
+    try {
+      const d = await api.design({ room, vibe, budget, seeded });
+      setDesign(d); setSettings(d.settings);
+      setBaseline(d.result); setLive(d.result); setLiveBudget(budget);
+    } catch (e) { setError((e as Error).message); throw e; } finally { setBusy(false); }
+  }
+
+  function resolveTo(nextBudget: number) {
+    if (!design || !baseline) return;
+    setLiveBudget(nextBudget);
+    const r = solve(design.candidates, { budget: nextBudget, settings, room: design.room, plan, prior: baseline });
+    setLive(r);
+  }
+
+  function applySettings(patch: Partial<SolverSettings>) {
+    const next = { ...settings, ...patch };
+    setSettings(next);
+    if (design && baseline) {
+      const r = solve(design.candidates, { budget: liveBudget, settings: next, room: design.room, plan, prior: baseline });
+      setLive(r);
+    }
+  }
+
+  async function recalibrate() {
+    setHasReference(true);
+    if (room) setRoom({ ...room, calibrated: true, errM: 0.1 });
+  }
+
+  async function loadShare(token: string) {
+    setBusy(true); setError(null);
+    try {
+      const { design: d } = await api.share(token);
+      setSeeded(!!d.seeded); setVibe(d.brief.vibeText); setBudget(d.brief.budget); setPhotoUrl(null);
+      setRoom(d.room); setDesign(d); setSettings(d.settings);
+      setBaseline(d.result); setLive(d.result); setLiveBudget(d.brief.budget);
+    } catch (e) { setError((e as Error).message); } finally { setBusy(false); }
+  }
+
+  function reset() {
+    setDesign(null); setBaseline(null); setLive(null); setRoom(null);
+    setCurrentRoomSpec(null); setPhotoUrl(null); setSeeded(false); setClarify(null);
+    setVibe(DEMO_VIBE); setBudget(800); setHasReference(false);
+  }
+
+  const value: Store = {
+    config, loadConfig, vibe, setVibe, budget, setBudget, hasReference, setHasReference, photoUrl,
+    room, currentRoomSpec, design, baseline, live, liveBudget, settings, plan,
+    clarify, setClarify, showWhy, setShowWhy, seeded, busy, error,
+    startDemo, ground, runDesign, resolveTo, applySettings, recalibrate, loadShare, reset,
+  };
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+}
