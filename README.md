@@ -118,3 +118,90 @@ repo/
 │  └─ render/               # paper.ts (wordmark/sprig/mascot) · furniture.ts · room.ts
 ├─ catalog/products.json    # the real product catalog (verified live URLs)
 ├─ mcp/server.ts            # the catalog MCP server (stdio)
+├─ skill/                   # the custom Qwen skill (SKILL.md + references + scripts)
+└─ public/                  # manifest, service worker, icons
+```
+
+The **art is procedural hand‑authored vector** (SVG paper‑cut shapes + `feTurbulence`
+grain), not a diffusion model — that's why it doesn't read as AI. The exact render harness
+from the design package is ported into `shared/render/*`, so the running app is
+pixel‑faithful to the approved mockups.
+
+---
+
+## Run it
+
+Requires **Node ≥ 20** (developed on Node 24).
+
+```bash
+npm install
+
+# development (two processes): Vite on :5173 proxies /api to Fastify on :8787
+npm run dev
+
+# production build + serve (the Fastify server serves the built SPA and the API)
+npm run build
+npm start            # → http://localhost:8787
+```
+
+The client only ever calls **relative `/api/*`** — no host or port is baked into client code.
+
+### Configuration
+
+Copy `.env.example` → `.env`. Nothing is required — the app runs fully offline (deterministic
+mode). Each key lights up more of the real engine:
+
+```bash
+PORT=8787
+DASHSCOPE_API_KEY=          # Qwen Cloud (the design's primary engine)
+ANTHROPIC_API_KEY=          # fallback reasoning provider (works live without a Qwen key)
+ANTHROPIC_MODEL=claude-haiku-4-5-20251001   # raise to claude-sonnet-5 / -opus for richer grounding
+SPRUCE_ENABLE_WEB_SEARCH=false               # live web sourcing (Qwen path only)
+```
+
+Secrets are read from the environment only — never hardcoded, never committed.
+
+### Other scripts
+
+```bash
+npm run mcp            # start the catalog MCP server (stdio)
+npm run catalog:check  # validate the catalog data file (schema + integrity)
+npm run typecheck      # tsc for client + server
+```
+
+The custom skill runs standalone too:
+```bash
+python skill/scripts/search_catalog.py --slot seating_primary --q "warm" --max-price 300 --in-stock
+```
+
+---
+
+## Deploy
+
+Any Node host works (`npm run build && npm start`). The design targets **Alibaba Cloud
+ECS/SAS (Singapore)** for the hackathon eligibility gate; set `DASHSCOPE_API_KEY` +
+`DASHSCOPE_BASE_URL=https://dashscope-intl.aliyuncs.com/compatible-mode/v1` (a plain
+pay‑as‑you‑go `sk-` key, **not** a Token‑Plan `sk-sp-` key) and the whole Qwen engine
+activates. It's also a standard Vite SPA + Node server, deployable to Vercel/Render/Fly, etc.
+
+Spruce is a **PWA** (installable, offline‑friendly): `public/manifest.webmanifest` +
+`public/sw.js`. It's a responsive web app (photo capture works on mobile browsers via the
+camera) — not a native app, so there is no APK.
+
+---
+
+## Honest limitations (also stated in‑UI, screen 09)
+
+- One photo has error bars — dimensions carry ± until you add a reference object (calibration).
+- Catalog coverage starts in one region (US) and expands; outside it, the Qwen path leans on
+  live web search rather than faking local stock.
+- Stock & prices move — every cart is timestamped and re‑checkable; a sold‑out piece
+  auto‑swaps rather than lying about availability.
+- The vision render is labelled *inspiration*; the buyable truth is the diorama built from
+  real product records.
+- **Spruce sources; you check out** — no card is charged here; the purchase is always yours
+  on the real store.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
