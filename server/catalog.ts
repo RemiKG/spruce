@@ -1,21 +1,18 @@
 /* Spruce — the server-side catalog store (the one warm, persistent store).
    Loads the real product records from catalog/products.json, hydrates them once,
    and serves filtered queries to the sourcing loop and the MCP server. */
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
 import { hydrateAll, validateCatalog, type RawProduct } from '../shared/catalog';
 import type { Product, Slot } from '../shared/types';
-
-const HERE = dirname(fileURLToPath(import.meta.url));
-export const CATALOG_PATH = join(HERE, '..', 'catalog', 'products.json');
+// The catalog ships as a bundled JSON import so it loads identically on a Node
+// host and inside a serverless function (no runtime filesystem dependency).
+import rawCatalog from '../catalog/products.json';
 
 let CACHE: Product[] | null = null;
 let RAW: RawProduct[] | null = null;
 
 export function loadCatalog(): Product[] {
   if (!CACHE) {
-    RAW = JSON.parse(readFileSync(CATALOG_PATH, 'utf8')) as RawProduct[];
+    RAW = rawCatalog as unknown as RawProduct[];
     const issues = validateCatalog(RAW);
     if (issues.length) console.warn('[catalog] integrity issues:', issues);
     CACHE = hydrateAll(RAW);
