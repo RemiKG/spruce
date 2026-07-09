@@ -3,7 +3,7 @@
    LIVE, on the user's real photo, right now). Same contract as every provider. */
 import Anthropic from '@anthropic-ai/sdk';
 import { ENV } from '../env';
-import { extractJson, clampNum, asArray } from './util';
+import { extractJson, clampNum, asArray, trimWords, cleanOptions } from './util';
 import type { AiProvider, BriefInput, BriefResult, CriticInput, CriticResult, GroundInput, NarrateInput } from './types';
 import type { RoomModel } from '../../shared/types';
 import { money } from '../../shared/numbers';
@@ -52,11 +52,11 @@ export const anthropicProvider: AiProvider = {
       errM: clampNum(Number(j.errM), 0.05, 0.8),
       calibrated: input.hasReference,
       light: String(j.light ?? 'unknown').slice(0, 12),
-      currentStyle: String(j.currentStyle ?? 'as-is').slice(0, 60),
+      currentStyle: trimWords(j.currentStyle ?? 'as-is', 60),
       doorwayCm: clampNum(Number(j.doorwayCm) || 90, 60, 130),
       objects,
       clarify: j.clarify?.question
-        ? { question: String(j.clarify.question).slice(0, 200), options: [String(j.clarify.options?.[0] ?? 'Keep it'), String(j.clarify.options?.[1] ?? 'Find me better')] as [string, string] }
+        ? { question: trimWords(j.clarify.question, 200), options: cleanOptions(j.clarify.options, ['Keep it as-is', 'Find me better']) }
         : undefined,
     };
   },
@@ -74,8 +74,8 @@ export const anthropicProvider: AiProvider = {
       mustKeep: asArray(j.mustKeep).slice(0, 5),
       avoidMaterials: asArray(j.avoidMaterials).slice(0, 5),
       palette: asArray(j.palette).slice(0, 6),
-      directionTitle: String(j.directionTitle ?? 'A calm, warm refresh.').slice(0, 60),
-      directionRationale: String(j.directionRationale ?? '').slice(0, 240),
+      directionTitle: trimWords(j.directionTitle ?? 'A calm, warm refresh.', 60),
+      directionRationale: trimWords(j.directionRationale ?? '', 240),
     };
   },
 

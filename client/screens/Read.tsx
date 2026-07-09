@@ -16,6 +16,7 @@ export function Read() {
   const nav = useNavigate();
   const room = s.room!;
   const spec = s.currentRoomSpec;
+  const keep = room.objects.find((o) => o.keepCandidate);
 
   async function toDirection() {
     try { if (!s.design) await s.runDesign(); nav('/direction'); } catch { /* toast */ }
@@ -56,7 +57,9 @@ export function Read() {
             </div>
             <p className="body">
               Existing: <b>{room.objects.slice(0, 4).map((o) => o.label + (o.note ? ` (${o.note})` : '')).join(', ')}</b>.
-              Current style: <b>{room.currentStyle}</b>. I can keep the sofa — or find you a warmer one in budget.
+              Current style: <b>{room.currentStyle}</b>. {keep
+                ? <>I can keep the {keep.label} — or find you a better one in budget.</>
+                : <>Nothing here has to stay — I'll source every piece fresh, in budget.</>}
             </p>
           </div>
 

@@ -30,3 +30,23 @@ export const clampNum = (x: number, lo: number, hi: number) =>
 
 export const asArray = (x: unknown): string[] =>
   Array.isArray(x) ? x.map((v) => String(v)).filter(Boolean) : [];
+
+/** Cap a string at `max` chars WITHOUT cutting mid-word ("eclectic fram." → "eclectic"). */
+export function trimWords(x: unknown, max: number): string {
+  const t = String(x ?? '').trim();
+  if (t.length <= max) return t;
+  const cut = t.slice(0, max);
+  const sp = cut.lastIndexOf(' ');
+  return (sp > max * 0.5 ? cut.slice(0, sp) : cut).replace(/[\s,;:·—-]+$/, '');
+}
+
+/** Models sometimes echo the placeholder option labels ("A", "B", "short A")
+ *  instead of writing real answers — swap those for usable defaults. */
+export function cleanOptions(raw: unknown, fallback: [string, string]): [string, string] {
+  const opts = [0, 1].map((i) => String((raw as any)?.[i] ?? '').trim());
+  return [0, 1].map((i) => {
+    const o = opts[i];
+    const placeholder = o.length < 3 || /^(option|answer|choice|short)?\s*[ab12]\.?$/i.test(o) || /^short\s+(answer|option)/i.test(o);
+    return placeholder ? fallback[i] : trimWords(o, 60);
+  }) as [string, string];
+}

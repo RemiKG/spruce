@@ -94,8 +94,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     try {
       let imageBase64: string | undefined; let mediaType: string | undefined;
       if (file) {
-        setPhotoUrl(URL.createObjectURL(file));
-        const r = await fileToBase64(file); imageBase64 = r.base64; mediaType = r.mediaType;
+        // decode + downscale first; only a renderable JPEG ever becomes the preview
+        const r = await fileToBase64(file);
+        setPhotoUrl(r.previewUrl);
+        imageBase64 = r.base64; mediaType = r.mediaType;
       } else {
         setPhotoUrl(null);
       }

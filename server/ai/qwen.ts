@@ -7,7 +7,7 @@
    Watch-out (handled below): rate-limit errors come back as HTTP 200 with a body
    of status:"failed", not a 4xx — we surface that as a thrown error below. */
 import { ENV } from '../env';
-import { extractJson, clampNum, asArray } from './util';
+import { extractJson, clampNum, asArray, trimWords, cleanOptions } from './util';
 import type { AiProvider, BriefInput, BriefResult, CriticInput, CriticResult, GroundInput, NarrateInput } from './types';
 import type { Brief, Product, RoomModel } from '../../shared/types';
 import { money } from '../../shared/numbers';
@@ -15,10 +15,15 @@ import { money } from '../../shared/numbers';
 type ChatMsg = { role: 'system' | 'user' | 'assistant'; content: any };
 
 async function chat(model: string, messages: ChatMsg[]): Promise<string> {
+  // enable_thinking:false — these are interactive calls; thinking mode adds
+  // 40–80 s of latency with no visible benefit on structured JSON answers.
   const res = await fetch(`${ENV.DASHSCOPE_BASE_URL}/chat/completions`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${ENV.DASHSCOPE_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model, messages, temperature: 0.4 }),
+    body: JSON.stringify({ model, messages, temperature: 0.4, enable_thinking: false }),
+    signal: AbortSignal.timeout(120_000),
+  }).catch((e: any) => {
+    throw new Error(`qwen ${model}: ${e?.name === 'TimeoutError' || e?.name === 'AbortError' ? 'timed out after 120s' : e?.message || e}`);
   });
   const data: any = await res.json().catch(() => ({}));
   // HTTP-200-with-status:"failed" rate-limit trap
@@ -40,7 +45,8 @@ export const qwenProvider: AiProvider = {
       "You are Spruce's room-grounding vision model (qwen3-vl-plus). Study the room photo and return ONLY JSON. Estimate metres from cues (doors ~2.0 m).";
     const prompt =
       `Vibe: "${input.vibe}". Reference object present: ${input.hasReference}. ` +
-      `JSON: {"widthM","depthM","heightM","errM","light","currentStyle","doorwayCm","objects":[{"label","note","keepCandidate"}],"clarify":{"question","options":["A","B"]}}.`;
+      `JSON: {"widthM","depthM","heightM","errM","light","currentStyle","doorwayCm","objects":[{"label","note","keepCandidate"}],` +
+      `"clarify":{"question":"ONE smart question about the room","options":[two SHORT self-explanatory answer phrases the user can pick between]}}.`;
     const raw = await chat('qwen3-vl-plus', [
       { role: 'system', content: sys },
       { role: 'user', content: visionContent(prompt, input) },
@@ -56,11 +62,11 @@ export const qwenProvider: AiProvider = {
       errM: clampNum(Number(j.errM), 0.05, 0.8),
       calibrated: input.hasReference,
       light: String(j.light ?? 'unknown').slice(0, 12),
-      currentStyle: String(j.currentStyle ?? 'as-is').slice(0, 60),
+      currentStyle: trimWords(j.currentStyle ?? 'as-is', 60),
       doorwayCm: clampNum(Number(j.doorwayCm) || 90, 60, 130),
       objects,
       clarify: j.clarify?.question
-        ? { question: String(j.clarify.question).slice(0, 200), options: [String(j.clarify.options?.[0] ?? 'Keep it'), String(j.clarify.options?.[1] ?? 'Find me better')] as [string, string] }
+        ? { question: trimWords(j.clarify.question, 200), options: cleanOptions(j.clarify.options, ['Keep it as-is', 'Find me better']) }
         : undefined,
     };
   },
@@ -76,8 +82,8 @@ export const qwenProvider: AiProvider = {
       mustKeep: asArray(j.mustKeep).slice(0, 5),
       avoidMaterials: asArray(j.avoidMaterials).slice(0, 5),
       palette: asArray(j.palette).slice(0, 6),
-      directionTitle: String(j.directionTitle ?? 'A calm, warm refresh.').slice(0, 60),
-      directionRationale: String(j.directionRationale ?? '').slice(0, 240),
+      directionTitle: trimWords(j.directionTitle ?? 'A calm, warm refresh.', 60),
+      directionRationale: trimWords(j.directionRationale ?? '', 240),
     };
   },
 

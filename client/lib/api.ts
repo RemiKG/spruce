@@ -15,6 +15,7 @@ export type Config = {
 async function j<T>(url: string, opts?: RequestInit): Promise<T> {
   const r = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...opts });
   if (!r.ok) {
+    if (r.status === 413) throw new Error('that photo is too large to upload — try a smaller one');
     const body = await r.json().catch(() => ({}));
     throw new Error((body as any).error || `${r.status} ${r.statusText}`);
   }
@@ -34,16 +35,43 @@ export const api = {
   log: (id: string) => j<{ events: LogEvent[] }>(`/api/log/${id}`),
 };
 
-/** Read a File as base64 (no data: prefix) for the /api/ground call. */
-export function fileToBase64(file: File): Promise<{ base64: string; mediaType: string }> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const res = String(reader.result);
-      const comma = res.indexOf(',');
-      resolve({ base64: res.slice(comma + 1), mediaType: file.type || 'image/jpeg' });
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
+/** Decode a File into a bitmap, with an <img> fallback for older engines. */
+async function decodeImage(file: File): Promise<ImageBitmap | HTMLImageElement> {
+  try {
+    return await createImageBitmap(file);
+  } catch {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('undecodable')); };
+      img.src = url;
+    });
+  }
+}
+
+/** Read a File as a downscaled JPEG for the /api/ground call. Phone photos run
+    3–8 MB and the hosted function caps request bodies well under that, so we
+    decode + resize to a 1600 px long edge before shipping. Re-encoding also
+    guarantees the on-screen preview is a renderable JPEG (a HEIC or non-image
+    file fails loudly here instead of leaving a blank panel). */
+export async function fileToBase64(file: File): Promise<{ base64: string; mediaType: string; previewUrl: string }> {
+  let src: ImageBitmap | HTMLImageElement;
+  try {
+    src = await decodeImage(file);
+  } catch {
+    throw new Error("couldn't read that file as a photo — try a JPG or PNG");
+  }
+  const w0 = 'naturalWidth' in src ? src.naturalWidth : src.width;
+  const h0 = 'naturalHeight' in src ? src.naturalHeight : src.height;
+  if (!w0 || !h0) throw new Error("couldn't read that file as a photo — try a JPG or PNG");
+  const MAX_EDGE = 1600;
+  const scale = Math.min(1, MAX_EDGE / Math.max(w0, h0));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.round(w0 * scale));
+  canvas.height = Math.max(1, Math.round(h0 * scale));
+  canvas.getContext('2d')!.drawImage(src, 0, 0, canvas.width, canvas.height);
+  if ('close' in src) src.close();
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+  return { base64: dataUrl.slice(dataUrl.indexOf(',') + 1), mediaType: 'image/jpeg', previewUrl: dataUrl };
 }
