@@ -70,7 +70,7 @@ export function MoneyShot() {
 
           <div className="pcard grow">
             <div className="phead">
-              <h3>The cart · sourced live</h3>
+              <h3>The cart · sourced &amp; linkable</h3>
               <span style={{ display: 'flex', gap: 14 }}>
                 <button className="linkbtn" onClick={() => nav('/steer')}>steer →</button>
                 <button className="linkbtn" onClick={() => s.setShowWhy(!s.showWhy)}>why this? ↓</button>

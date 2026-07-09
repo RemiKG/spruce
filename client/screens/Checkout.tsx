@@ -18,8 +18,7 @@ export function Checkout() {
   const d = s.design!;
   const r = s.live!;
   const items = r.items.filter((i) => i.state !== 'dropped');
-  const t = new Date(d.createdAt);
-  const stamp = `${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}`;
+  const stamp = items[0]?.product.capturedAt ?? '';
   const palette = (d.concept?.palette ?? ['walnut', 'boucle', 'sage', 'terracotta']).slice(0, 4);
   const swatch = (w: string) => { const t = w.toLowerCase(); for (const k of Object.keys(PAL)) if (t.includes(k)) return PAL[k]; return '#DAD0BC'; };
   const openAll = () => items.forEach((i) => window.open(i.product.retailer.url, '_blank', 'noopener'));
@@ -41,7 +40,7 @@ export function Checkout() {
               <GateBadge n={3}>approve &amp; check out</GateBadge>
             </div>
             <div className="cart-sub" style={{ margin: '10px 0 6px' }}>
-              all in stock · prices checked {stamp} · <Chip tone="sprig" style={{ marginLeft: 6 }}><span className="dot" /> re-checkable anytime</Chip>
+              in stock at capture · price snapshot {stamp} · <Chip tone="sprig" style={{ marginLeft: 6 }}><span className="dot" /> verify at the store</Chip>
             </div>
             <div style={{ marginTop: 6 }}>
               {items.map((it) => <CartRow key={it.product.id} item={it} showState={false} showOpen />)}

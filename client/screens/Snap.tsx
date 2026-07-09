@@ -39,7 +39,7 @@ export function Snap() {
         <Wordmark size={30} />
         <div className="land-nav">
           <Link to="/engine" onClick={(e) => { if (!s.design) { e.preventDefault(); demo(); } }}>How it works</Link>
-          <a href="https://github.com/" target="_blank" rel="noopener">GitHub ↗</a>
+          <a href="https://github.com/RemiKG/spruce" target="_blank" rel="noopener">GitHub ↗</a>
           <span className="chip pill" style={{ background: pill.dot ? 'color-mix(in srgb, var(--sprig) 14%, var(--cream-hi))' : undefined }}>
             {pill.dot && <span className="dot" />} {pill.text}
           </span>
@@ -52,8 +52,9 @@ export function Snap() {
           <h1>Snap the room.<br />Set your number.<br /><span className="green">Approve the cart.</span></h1>
           <p className="lead">
             An interior designer is $2,000 and three weeks. Spruce reads your actual room,
-            designs a direction, then sources every piece for real — live products, live
-            prices, in stock, that fit your space and add up to <i>under your budget</i>.
+            designs a direction, then sources every piece for real — real products with
+            real store links, from a dated price snapshot, that fit your space and add up
+            to <i>under your budget</i>.
           </p>
           <p className="pullquote">A mood board you can't buy is just a tease. The picture is the cart.</p>
           <div className="steps">
@@ -72,7 +73,7 @@ export function Snap() {
               onDragLeave={() => setDrag(false)}
               onDrop={(e) => { e.preventDefault(); setDrag(false); onFile(e.dataTransfer.files?.[0] ?? null); }}>
               <div className="drop-thumb">
-                {preview ? <img src={preview} alt="your room" />
+                {preview ? <img src={preview} alt="your room" onError={() => setPreview(null)} />
                   : <Thumbnail thumb={{ fn: 'sofa', o: { seats: 3, body: 'sage', legs: 'walnut' }, vb: '-150 -150 300 176' }} />}
               </div>
               <div className="drop-meta">

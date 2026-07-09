@@ -70,7 +70,7 @@ export function States() {
           <div className="stack" style={{ gap: 16 }}>
             <div className="pcard"><h3 className="display" style={{ margin: '0 0 6px', fontSize: 17 }}>◆ The buyable diorama <Chip tone="sprig" style={{ marginLeft: 6 }}>what you buy</Chip></h3><p className="body">Real product photos, background-removed and placed in your measured room. What you see is what you buy — to the dollar.</p></div>
             <div className="pcard"><h3 className="display" style={{ margin: '0 0 6px', fontSize: 17 }}>The vision render <Chip tone="amber" style={{ marginLeft: 6 }}>not literal</Chip></h3><p className="body">A qwen-image “dream” of the finished room. Clearly marked — we never pass it off as the thing you'll receive.</p></div>
-            <div className="pcard"><h3 className="display" style={{ margin: '0 0 6px', fontSize: 17 }}>⧗ Timestamped &amp; re-checkable</h3><p className="body">Stock &amp; prices move, so every cart is stamped with the moment it was priced — re-run the live check any time before you buy.</p></div>
+            <div className="pcard"><h3 className="display" style={{ margin: '0 0 6px', fontSize: 17 }}>⧗ Timestamped &amp; re-checkable</h3><p className="body">Stock &amp; prices move, so every cart is stamped with the date it was priced — every link opens the real store, so confirm there before you buy.</p></div>
           </div>
         </div>
       </div>
