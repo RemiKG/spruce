@@ -212,7 +212,7 @@ export function solve(candidates: Candidate[], opts: SolveOptions): SolveResult 
       it.prevPrice = prev.price;
       const cheaper = it.product.price < prev.price;
       it.reason = cheaper
-        ? `same ${SLOT_WORD[it.slot]} look, ${prev.price - it.product.price} less — in stock, still fits`
+        ? `same ${SLOT_WORD[it.slot]} look, $${Math.round(prev.price) - Math.round(it.product.price)} less — in stock, still fits`
         : `a closer match to the look — in stock, still fits`;
     }
   }
