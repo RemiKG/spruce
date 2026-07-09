@@ -5,9 +5,10 @@
 
 Snap a photo of the room you're sick of and type a budget. A little designer reads the
 space, designs a direction, then — the part every other AI-decor app skips — **goes and
-sources every single piece for real**: live products, live prices, in stock, that fit your
-room's actual dimensions and add up to *under your number*. What it shows you is not a
-render. **It's a cart** — every piece deep-links to the real retailer at the shown price.
+sources every single piece for real**: real products with real store links, priced from a
+dated catalog snapshot, that fit your room's actual dimensions and add up to *under your
+number*. What it shows you is not a render. **It's a cart** — every piece deep-links to
+the real retailer, where you confirm the current price before you buy.
 
 Spruce is a **Track‑4 (Autopilot Agent)** entry for the Qwen Cloud Global AI Hackathon: a
 procurement‑and‑design workflow automated end‑to‑end, with three human‑in‑the‑loop gates
@@ -50,7 +51,7 @@ never mocked:
 **Labelled conveniences (on top, never instead):** the **seeded demo room** pre‑fills a
 real room grounding + budget + vibe into the same fields and runs the same live engine; and
 the furniture in the diorama is the **paper‑cut rendering** of each piece — the
-background‑removed real product photo + live price live one click away on the retailer page
+background‑removed real product photo + its snapshot price, the retailer page one click away
 (the honesty seam, stated in‑UI on the *limits* screen).
 
 ---
