@@ -71,8 +71,9 @@ else                    → heuristic    (fully deterministic; solver + catalog 
 ```
 
 The deterministic core (solver, fit, catalog, links, share, NDJSON log, live re‑solve) runs
-for real in **all three** modes. See `_NEEDS DashScope (Qwen) API key.md` (kept outside this
-repo) for exactly what a Qwen key lights up.
+for real in **all three** modes. A Qwen (DashScope) key lights up the full engine — VL
+grounding + concept‑critic, `text-embedding-v4` + `qwen3-rerank` style search, and the
+`qwen3.7-max` agentic loop with `web_search` / `web_extractor`.
 
 ### Data flow
 

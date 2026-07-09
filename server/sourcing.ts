@@ -61,7 +61,7 @@ export async function sourceDesign(input: SourceInput): Promise<Design> {
   push('style.rerank', `${styleLabel} · ${candidates.length} real catalog items ranked`);
 
   const webSearch = ai.ENV.ENABLE_WEB_SEARCH && ai.activeProvider() === 'qwen';
-  const webHits = 0; // live web_search extends the catalog when enabled (see _NEEDS note)
+  const webHits = 0; // live web_search extends the catalog when enabled (Qwen path only)
   if (webSearch) push('web_search', 'live retailer lookups enabled');
 
   // 3) the deterministic budget-solver gate

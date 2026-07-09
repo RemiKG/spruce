@@ -5,7 +5,7 @@
      - qwen3.7-plus    : structured brief / narration (JSON, vision-capable)
      - text-embedding-v4 + qwen3-rerank : semantic style search
    Watch-out (handled below): rate-limit errors come back as HTTP 200 with a body
-   of status:"failed", not a 4xx. See "_NEEDS DashScope (Qwen) API key.md". */
+   of status:"failed", not a 4xx — we surface that as a thrown error below. */
 import { ENV } from '../env';
 import { extractJson, clampNum, asArray } from './util';
 import type { AiProvider, BriefInput, BriefResult, CriticInput, CriticResult, GroundInput, NarrateInput } from './types';
