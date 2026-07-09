@@ -1,5 +1,5 @@
 /* Spruce — serverless function source (Vercel). Bundled at build time by esbuild
-   into api/[...path].js (a single self-contained ESM file; node_modules stay
+   into api/index.js (a single self-contained ESM file; node_modules stay
    external and resolve at runtime), so there are no extensionless-ESM resolution
    problems. It wraps the same Fastify app used on a Node host and feeds each
    /api/* request to it. The SPA is served as static output by the platform

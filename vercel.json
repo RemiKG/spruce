@@ -3,9 +3,10 @@
   "buildCommand": "npm run build && node scripts/build-fn.mjs",
   "outputDirectory": "dist/client",
   "functions": {
-    "api/*.js": { "maxDuration": 300 }
+    "api/index.js": { "maxDuration": 300 }
   },
   "rewrites": [
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    { "source": "/api/(.*)", "destination": "/api" },
+    { "source": "/((?!api).*)", "destination": "/index.html" }
   ]
 }
