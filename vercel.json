@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npm run build && node ./node_modules/esbuild/bin/esbuild server/serverless-entry.ts --bundle --platform=node --format=esm --packages=external --target=node20 --outfile='api/[...path].js'",
+  "buildCommand": "npm run build && node scripts/build-fn.mjs",
   "outputDirectory": "dist/client",
   "rewrites": [
     { "source": "/((?!api/).*)", "destination": "/index.html" }
