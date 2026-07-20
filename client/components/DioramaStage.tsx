@@ -12,8 +12,8 @@ const NOUN: Record<Slot, string> = {
   wall_art: 'wall piece', storage: 'shelf', accent: 'accent',
 };
 
-export function DioramaStage({ result, narration, showPins = true, framelabel = true }: {
-  result: SolveResult; narration?: string; showPins?: boolean; framelabel?: boolean;
+export function DioramaStage({ result, narration, showPins = true, framelabel = true, photoUrl }: {
+  result: SolveResult; narration?: string; showPins?: boolean; framelabel?: boolean; photoUrl?: string | null;
 }) {
   const spec = dioramaSpec(result.items);
   const ghosts = ghostSvg(result.dropped);
@@ -26,6 +26,13 @@ export function DioramaStage({ result, narration, showPins = true, framelabel = 
       {framelabel && (
         <div className="framelabel">
           <span className="chip"><span className="dot" /> the buyable diorama — <b>&nbsp;every piece real</b></span>
+        </div>
+      )}
+
+      {photoUrl && (
+        <div className="photoinset" title="Your photo, kept in frame — the plan is drawn for this exact room">
+          <img src={photoUrl} alt="your room, as-is" />
+          <div className="cap">your room · as-is → the plan</div>
         </div>
       )}
 

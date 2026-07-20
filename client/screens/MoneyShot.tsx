@@ -12,6 +12,35 @@ import { GateBadge, StatGrid, Money, Chip } from '../components/bits';
 import { templateNarration } from '../../shared/narrate';
 import { SLOT_WEIGHT } from '../../shared/solver';
 import { fmtDur, money } from '../../shared/numbers';
+import type { CartItem } from '../../shared/types';
+
+/** Each nudge/answer from gate 1, pointed at the real cart line that answers it —
+ *  a visible consequence, never an invented one. */
+function steerNotes(nudges: string[], clarify: string | null, items: CartItem[], palette: string[]): string[] {
+  const notes: string[] = [];
+  const find = (slot: string) => items.find((i) => i.slot === slot);
+  if (clarify) notes.push(`you answered “${clarify}” — that steered the read`);
+  for (const n of nudges) {
+    if (n === 'more plants') {
+      const p = find('plant');
+      notes.push(p ? `“more plants” → ${p.product.title} (${money(p.product.price)}) is in the cart` : `“more plants” → no plant fit the budget this pass — raise the slider to fit one`);
+    } else if (n === 'bolder art') {
+      const a = find('wall_art');
+      notes.push(a ? `“bolder art” → ${a.product.title} (${money(a.product.price)}) holds the wall` : `“bolder art” → no wall piece fit the budget this pass`);
+    } else if (n === 'warmer') {
+      const l = find('lighting');
+      notes.push(l ? `“warmer” → warm lamplight from ${l.product.title} (${money(l.product.price)})` : `“warmer” → the palette leans ${palette.slice(0, 2).join(' + ') || 'warm wood'}`);
+    } else if (n === 'less wood') {
+      const wood = items.filter((i) => i.product.materials.some((m) => /wood|oak|walnut|pine|teak|birch/i.test(m)));
+      notes.push(`“less wood” → only ${wood.length} wooden piece${wood.length === 1 ? '' : 's'} of ${items.length} in the cart`);
+    } else if (n === 'keep it calm') {
+      notes.push(`“keep it calm” → palette held to ${palette.slice(0, 3).join(', ') || 'muted neutrals'}, no loud pieces`);
+    } else {
+      notes.push(`“${n}” → noted against the cart`);
+    }
+  }
+  return notes;
+}
 
 export function MoneyShot() {
   const s = useStore();
@@ -32,6 +61,11 @@ export function MoneyShot() {
     return all.sort((a, b) => (SLOT_WEIGHT[b.slot] - SLOT_WEIGHT[a.slot]));
   }, [r]);
 
+  const steer = useMemo(
+    () => steerNotes(s.nudges, s.clarify, r.items, d.concept?.palette ?? d.brief.palette ?? []),
+    [s.nudges, s.clarify, r],
+  );
+
   const under = r.underBudget;
   function copyShare() {
     const url = `${location.origin}/d/${d.share ?? ''}`;
@@ -49,7 +83,7 @@ export function MoneyShot() {
         </>} />
 
       <div className="stage">
-        <DioramaStage result={r} narration={narration} />
+        <DioramaStage result={r} narration={narration} photoUrl={s.photoUrl} />
 
         <div className="rail">
           <div className="pcard">
@@ -67,6 +101,13 @@ export function MoneyShot() {
               <div className="ends"><span>{money(400)}</span><span>drag to re-solve the whole cart</span><span>{money(2000)}</span></div>
             </div>
           </div>
+
+          {steer.length > 0 && (
+            <div className="diffnote">
+              <div className="dh">your steer, reflected</div>
+              {steer.map((line, i) => <div className="dl" key={i}>{line}</div>)}
+            </div>
+          )}
 
           <div className="pcard grow">
             <div className="phead">

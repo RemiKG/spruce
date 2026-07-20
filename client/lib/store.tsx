@@ -28,6 +28,7 @@ type Store = {
   plan: Slot[];
 
   clarify: string | null; setClarify: (s: string | null) => void;
+  nudges: string[]; setNudges: (n: string[]) => void;
   showWhy: boolean; setShowWhy: (b: boolean) => void;
   seeded: boolean;
 
@@ -66,6 +67,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [liveBudget, setLiveBudget] = useState(800);
   const [settings, setSettings] = useState<SolverSettings>(DEFAULT_SETTINGS);
   const [clarify, setClarify] = useState<string | null>(null);
+  const [nudges, setNudges] = useState<string[]>([]);
   const [showWhy, setShowWhy] = useState(false);
   const [seeded, setSeeded] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -150,14 +152,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   function reset() {
     setDesign(null); setBaseline(null); setLive(null); setRoom(null);
-    setCurrentRoomSpec(null); setPhotoUrl(null); setSeeded(false); setClarify(null);
+    setCurrentRoomSpec(null); setPhotoUrl(null); setSeeded(false); setClarify(null); setNudges([]);
     setVibe(DEMO_VIBE); setBudget(800); setHasReference(false);
   }
 
   const value: Store = {
     config, loadConfig, vibe, setVibe, budget, setBudget, hasReference, setHasReference, photoUrl,
     room, currentRoomSpec, design, baseline, live, liveBudget, settings, plan,
-    clarify, setClarify, showWhy, setShowWhy, seeded, busy, error,
+    clarify, setClarify, nudges, setNudges, showWhy, setShowWhy, seeded, busy, error,
     startDemo, ground, runDesign, resolveTo, applySettings, recalibrate, loadShare, reset,
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

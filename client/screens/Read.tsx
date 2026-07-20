@@ -37,14 +37,31 @@ export function Read() {
             : spec ? <Diorama spec={spec} /> : null}
           <div className="framelabel"><Chip><span className="dot" /> your photo — <b>&nbsp;as-is</b></Chip></div>
 
-          {room.objects.slice(0, 4).map((o, i) => (
-            <div key={i} className={`detlabel ${o.keepCandidate ? 'keep' : ''}`} style={ANCHORS[i]}>
-              {o.label}{o.note ? ` · ${o.note}` : ''}{o.keepCandidate ? ' · keep or replace?' : ''}
+          {s.photoUrl ? (
+            /* real photo → an honest, unanchored legend: what the model saw,
+               with no arrows claiming where. */
+            <div className="detlegend">
+              <div className="lh">seen in your photo</div>
+              {room.objects.slice(0, 5).map((o, i) => (
+                <div key={i} className={`li ${o.keepCandidate ? 'keep' : ''}`}>
+                  {o.label}{o.note ? ` · ${o.note}` : ''}{o.keepCandidate ? ' · keep or replace?' : ''}
+                </div>
+              ))}
+              {room.calibrated && <div className="li keep">reference found · scale locked ✓</div>}
             </div>
-          ))}
+          ) : (
+            /* seeded demo diorama → labels drawn onto the known layout */
+            <>
+              {room.objects.slice(0, 4).map((o, i) => (
+                <div key={i} className={`detlabel ${o.keepCandidate ? 'keep' : ''}`} style={ANCHORS[i]}>
+                  {o.label}{o.note ? ` · ${o.note}` : ''}{o.keepCandidate ? ' · keep or replace?' : ''}
+                </div>
+              ))}
+              {room.calibrated && <div className="detlabel keep" style={{ left: '66%', top: '88%' }}>A4 sheet · scale locked ✓</div>}
+            </>
+          )}
           <div className="dimtag" style={{ left: '50%', top: '95%' }}>◄ ≈ {room.widthM.toFixed(1)} m ►</div>
           <div className="dimtag" style={{ left: '6%', top: '62%' }}>≈ {room.depthM.toFixed(1)} m</div>
-          {room.calibrated && <div className="detlabel keep" style={{ left: '66%', top: '88%' }}>A4 sheet · scale locked ✓</div>}
         </div>
 
         <div className="rail">
