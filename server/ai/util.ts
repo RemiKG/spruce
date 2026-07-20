@@ -40,6 +40,17 @@ export function trimWords(x: unknown, max: number): string {
   return (sp > max * 0.5 ? cut.slice(0, sp) : cut).replace(/[\s,;:·—-]+$/, '');
 }
 
+/** Cap a string at ~`max` chars, preferring to end at a sentence boundary so
+ *  nothing ships cut mid-thought ("…the room feels" → full previous sentence). */
+export function trimSentence(x: unknown, max: number): string {
+  const t = String(x ?? '').trim();
+  if (t.length <= max) return t;
+  const cut = t.slice(0, max);
+  const end = Math.max(cut.lastIndexOf('.'), cut.lastIndexOf('!'), cut.lastIndexOf('?'));
+  if (end > max * 0.4) return cut.slice(0, end + 1);
+  return trimWords(t, max) + '…';
+}
+
 /** Models sometimes echo the placeholder option labels ("A", "B", "short A")
  *  instead of writing real answers — swap those for usable defaults. */
 export function cleanOptions(raw: unknown, fallback: [string, string]): [string, string] {

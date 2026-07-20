@@ -7,7 +7,7 @@
    Watch-out (handled below): rate-limit errors come back as HTTP 200 with a body
    of status:"failed", not a 4xx — we surface that as a thrown error below. */
 import { ENV } from '../env';
-import { extractJson, clampNum, asArray, trimWords, cleanOptions } from './util';
+import { extractJson, clampNum, asArray, trimWords, trimSentence, cleanOptions } from './util';
 import type { AiProvider, BriefInput, BriefResult, CriticInput, CriticResult, GroundInput, NarrateInput } from './types';
 import type { Brief, Product, RoomModel } from '../../shared/types';
 import { money } from '../../shared/numbers';
@@ -61,7 +61,7 @@ export const qwenProvider: AiProvider = {
       heightM: clampNum(Number(j.heightM), 2.0, 4),
       errM: clampNum(Number(j.errM), 0.05, 0.8),
       calibrated: input.hasReference,
-      light: String(j.light ?? 'unknown').slice(0, 12),
+      light: trimWords(j.light ?? 'unknown', 28),
       currentStyle: trimWords(j.currentStyle ?? 'as-is', 60),
       doorwayCm: clampNum(Number(j.doorwayCm) || 90, 60, 130),
       objects,
@@ -83,7 +83,7 @@ export const qwenProvider: AiProvider = {
       avoidMaterials: asArray(j.avoidMaterials).slice(0, 5),
       palette: asArray(j.palette).slice(0, 6),
       directionTitle: trimWords(j.directionTitle ?? 'A calm, warm refresh.', 60),
-      directionRationale: trimWords(j.directionRationale ?? '', 240),
+      directionRationale: trimSentence(j.directionRationale ?? '', 420),
     };
   },
 
@@ -96,7 +96,7 @@ export const qwenProvider: AiProvider = {
       { role: 'system', content: 'You are the little spruce sprig. One or two warm sentences, first person, no hype.' },
       { role: 'user', content: `Budget ${money(input.budget)} → ${money(input.total)}. ${lines.join('; ')}. Narrate warmly.` },
     ]);
-    return raw.trim().replace(/^["']|["']$/g, '').slice(0, 260);
+    return trimSentence(raw.trim().replace(/^["']|["']$/g, ''), 300);
   },
 
   async critic(input: CriticInput): Promise<CriticResult> {
